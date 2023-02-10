@@ -18,7 +18,7 @@ cursor = conn.cursor()
 cursor.execute("SELECT ticker FROM company")
 done = [row[0] for row in cursor.fetchall()]
 
-for symbol in [ticker for ticker in tickers if ticker not in done]:
+for symbol in [ticker for ticker in tickers if ticker > done[-1]]:
   url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={symbol}&apikey={API_KEY}"
   r = requests.get(url)
   dailyData = r.json()
@@ -27,7 +27,7 @@ for symbol in [ticker for ticker in tickers if ticker not in done]:
   r = requests.get(url)
   companyData = r.json()
 
-  if companyData.get('Symbol') and dailyData.get('Time Series (Daily)'):
+  if companyData.get('Symbol') and dailyData.get('Time Series (Daily)') and companyData.get('PERation') != 'None':
     done.append(symbol)
     # Insert data into the company table
     print(f"{i}: Filling data for {companyData['Name']} ({companyData['Symbol']})")
@@ -49,8 +49,8 @@ for symbol in [ticker for ticker in tickers if ticker not in done]:
         )
 
     conn.commit()
-    time.sleep(30)
 
+  time.sleep(30)
   i += 1
 
   if i > 200:
